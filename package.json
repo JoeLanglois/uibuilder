@@ -1,19 +1,39 @@
 {
-  "name": "UIBuilder",
-  "version": "1.0.0",
-  "description": "Typed HTML templates using TypeScript's TSX files",
-  "main": "index.js",
+  "name": "@jdlanglois/uibuilder",
+  "version": "0.1.0",
+  "description": "Tiny TSX runtime that creates real DOM nodes",
+  "type": "module",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wisercoder/uibuilder"
+    "url": "git+https://github.com/JoeLanglois/uibuilder.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "import": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/jsx-dev-runtime.d.ts",
+      "import": "./dist/jsx-dev-runtime.js"
+    }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
-  "author": "",
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-sass": "^3.1.0"
-  },
-  "license": "MIT"
+    "happy-dom": "^18.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
 }

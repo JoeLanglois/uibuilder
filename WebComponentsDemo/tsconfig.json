@@ -1,9 +1,0 @@
-﻿{
-  "compileOnSave": true,
-  "compilerOptions": {
-    "sourceMap": false,
-    "target": "es6",
-    "jsx": "react",
-    "reactNamespace": "UIBuilder"
-  }
-}

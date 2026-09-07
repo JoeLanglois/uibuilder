@@ -1,64 +1,193 @@
 # UIBuilder
-Typed HTML templates using TypeScript's TSX files.
 
-## Typed Templates
+Tiny TSX runtime for building **real DOM nodes**.
 
-UIBuilder is a HTML templating library in the style of Mustache and Handlebars, for Web application development using TypeScript. Because of compile-time checking and "Intellisense" UIBuilder is a better choice than Mustache or Handlebars.
+UIBuilder is deliberately not a framework. There is no virtual DOM, reconciliation, reactive state, hooks, component lifecycle, scheduler, or hidden renderer. TSX is just pleasant syntax for creating DOM.
 
-UIBuilder templates are written using TypeScript's TSX syntax which mixes HTML with TypeScript. If you know HTML and TypeScript you already know TSX. You use regular HTML tags for composing UI elements, and regular TypeScript for loops and conditionals. Building custom elements (Components) is supported.
+```tsx
+const view = (
+  <main>
+    <h1>Hello</h1>
+    <button onclick={() => console.log("clicked")}>Save</button>
+  </main>
+)
 
-TypeScript compiler is needed to compile TSX files. Visual Studio is not needed. However, if you use Visual Studio you get benefits such as:
-* Auto-indent
-* Syntax coloring
-* Type checking
-* Intellisense suggestions for TypeScript expressions
-* Refactoring: you can rename variables without worrying about breaking your templates
-* Error checking squiggly lines as you type:
-    * Mismatched HTML tags
-    * TypeScript syntax errors
-* Put breakpoints inside your template
-
-## JSX for Web Components
-UIBuilder brings the power and convenience of JSX to Web Components.
-
-### What is JSX?
-JSX is an extension to JavaScript that allows you to build dynamic user interfaces by embedding HTML-like syntax within JavaScript code. Other templating languages either embed HTML as strings within JavaScript code, or embed code as strings within HTML, which means tools are only able to provide compile-time checking for either code or markup, not both. In JSX both code and markup are first-class citizens, which enables tools to provide compile-time checking, syntax coloring and "Intellisense" for code as well as markup. More information about JSX can be found [here](https://facebook.github.io/jsx/).
-
-TypeScript's implementation of JSX is [TSX](https://basarat.gitbooks.io/typescript/content/docs/jsx/tsx.html). UIBuilder leverages TSX and lets the TypeScript compiler do all of the heavy lifting.
-
-### What are Web Components?
-
-Web Components are user interface widgets that are written once and can be reused reliably on multiple pages and Web sites. The reliability comes from the fact that the DOM tree inside a Web Component is encapsulated from the rest of the page, so you don't have to worry about things like conflicting id and style class names or JavaScript variables. The technology that enables this isolation is Shadow DOM. Read more about it [here](https://developers.google.com/web/fundamentals/getting-started/primers/shadowdom).
-
-Web Components are a W3 standard. The W3 page for Web Components can be found [here](https://www.w3.org/standards/techs/components).
-
-Shadow DOM is currently implemented by all browsers, including Chrome, Edge, Firefox and Safari.
-
-## What it doesn't do
-Unlike React.js UIBuilder does not do incremental screen updates. 
-
-A valid approach to update the screen is to divide your page into multiple components. When data changes just replace the component that contains stale data. For example, you can update just a single component on your page like this:
-
-```typescript
- const element = UIBuilder.createElement<CustomerPanelProps>(CustomerPanel, { customerInfo: freshCustomerInfo });
- document.querySelector(".customer-panel").replaceWith(element);
+document.body.append(view)
 ```
 
-If you think this is not as convenient as a setState call in React you're correct but you're forgetting how much rigmarole React puts you through. For small applications React's setState works very well because you don't have to know what portions of the UI need to be updated. Larger React applications need to implement shouldComponentUpdate for performance optimization. At that point the convenience is gone, and all the incantations, rituals and ceremony of React got you nothing.
+## Philosophy
 
-## Why not just use React?
+The browser already has a UI tree: the DOM.
 
-React does not have the equivalent of a Shadow DOM. React components are brittle. The brittleness comes from the global nature of HTML, CSS, and JS. The DOM tree inside a React component isn't encapsulated from the rest of the page. This lack of encapsulation means your document stylesheet might accidentally apply to parts inside the widget; your JavaScript might accidentally modify parts inside the widget; your IDs might overlap with IDs inside the component; and so on. (More on Shadow DOM [here](https://www.html5rocks.com/en/tutorials/webcomponents/shadowdom).)
+UIBuilder keeps the original project's useful idea and removes the historical machinery around it:
 
-Unlike React, UIBuilder is compatible with [Web Components](https://www.w3.org/standards/techs/components) which does not have the above problems.
+- TSX creates actual DOM nodes immediately.
+- Function components are ordinary functions.
+- Strings and numbers become text nodes, so interpolation is safe by default.
+- Events use DOM-native names such as `onclick` and `oninput`.
+- DOM properties are assigned directly when possible.
+- `data-*`, `aria-*`, SVG, fragments, arrays and callback refs work naturally.
+- Redraw boundaries stay explicit. Replace a whole screen or one subtree when your application decides to.
 
-Web Components also support multiple [named slots](https://developers.google.com/web/fundamentals/getting-started/primers/shadowdom#composition_slot) for placing child elements. React components have just one, unnamed slot.
+## Install
 
-Web Components are a W3 open standard. React is opensource but it is not based on standards.
+```sh
+npm install @jdlanglois/uibuilder
+```
 
-UIBuilder creates real DOM nodes, not virtual nodes, which makes it easier to implement advanced features that require manipulating the DOM directly, such as drag & drop and animation. It is also easier to integrate with DOM-mutating libraries such as d3.js and take full advantage of its features, such as transitions.
+Configure TypeScript to use UIBuilder's automatic JSX runtime:
 
-UIBuilder does not use any React.js code.
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@jdlanglois/uibuilder"
+  }
+}
+```
+
+No `createElement` import is required.
+
+## Components
+
+Components are just functions returning DOM:
+
+```tsx
+type User = {
+  id: number
+  name: string
+}
+
+function UserRow({ user }: { user: User }) {
+  return (
+    <li>
+      <strong>{user.name}</strong>
+      <button onclick={() => edit(user.id)}>Edit</button>
+    </li>
+  )
+}
+
+const row = <UserRow user={{ id: 1, name: "Ada" }} />
+```
+
+There are no component instances and no component lifecycle.
+
+## Children and fragments
+
+Arrays are flattened recursively. `null`, `undefined` and booleans render nothing.
+
+```tsx
+const list = (
+  <ul>
+    {users.map(user => <UserRow user={user} />)}
+  </ul>
+)
+
+const pair = (
+  <>
+    <button>Previous</button>
+    <button>Next</button>
+  </>
+)
+```
+
+Fragments are real `DocumentFragment` objects.
+
+## DOM-native props
+
+UIBuilder intentionally follows the platform rather than React conventions.
+
+```tsx
+const input = (
+  <input
+    class="search"
+    value="hello"
+    disabled={false}
+    aria-label="Search"
+    data-kind="query"
+    oninput={event => {
+      console.log(event.currentTarget.value)
+    }}
+  />
+)
+```
+
+Use `class`, `for`, `onclick`, `oninput`, etc.
+
+A callback `ref` gives direct access to the node:
+
+```tsx
+let input: HTMLInputElement
+
+const view = <input ref={element => { input = element }} />
+```
+
+## Explicit redraws
+
+UIBuilder does not decide when or how your application redraws.
+
+For a screen-sized redraw:
+
+```tsx
+import { mount } from "@jdlanglois/uibuilder"
+
+mount(document.querySelector("#app")!, <Companies />)
+```
+
+For a surgical redraw:
+
+```tsx
+import { replace } from "@jdlanglois/uibuilder"
+
+replace(
+  document.querySelector("#company-list")!,
+  <CompanyList companies={companies} />
+)
+```
+
+These are thin wrappers over native DOM replacement.
+
+## Safety
+
+Interpolated values are inserted with `document.createTextNode`, not parsed as HTML:
+
+```tsx
+const userInput = "<img src=x onerror=alert(1)>"
+
+const view = <p>{userInput}</p>
+```
+
+The value above is displayed as text.
+
+UIBuilder does not provide a special raw-HTML escape hatch. If you explicitly assign `innerHTML`, you are using the DOM API directly and are responsible for sanitizing that HTML.
+
+## API
+
+The public API is intentionally small:
+
+```ts
+jsx
+jsxs
+Fragment
+append
+toNode
+mount
+replace
+```
+
+Most applications should only need TSX plus `mount` or `replace`.
+
+## Development
+
+```sh
+npm install
+npm test
+npm run typecheck
+npm run build
+```
+
+The build is plain TypeScript. Vitest + happy-dom cover DOM behavior. No Gulp, Visual Studio project, committed build output, or framework-specific tooling.
 
 ## License
-Please see file named LICENSE
+
+MIT. This project is a modern rewrite of the original UIBuilder by wisercoder; the original copyright notice is preserved in [LICENSE](./LICENSE).

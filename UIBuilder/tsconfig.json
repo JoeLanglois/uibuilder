@@ -1,7 +1,0 @@
-{
-  "compileOnSave": true,
-  "compilerOptions": {
-    "out": "../dist/uibuilder-1.7.0.js",
-    "declaration": true
-  }
-}
