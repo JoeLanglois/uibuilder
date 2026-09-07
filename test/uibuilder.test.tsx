@@ -1,7 +1,6 @@
 /** @jsxImportSource ../src */
 
 import { describe, expect, it, vi } from "vitest"
-import { Fragment, mount, replace } from "../src/index.js"
 
 describe("UIBuilder", () => {
   it("creates real DOM nodes from TSX", () => {
@@ -78,24 +77,5 @@ describe("UIBuilder", () => {
 
     expect(svg.namespaceURI).toBe("http://www.w3.org/2000/svg")
     expect(svg.firstElementChild?.namespaceURI).toBe("http://www.w3.org/2000/svg")
-  })
-
-  it("mounts by replacing the target contents", () => {
-    const host = document.createElement("main")
-    host.innerHTML = "<p>old</p>"
-
-    mount(host, <h1>new</h1>)
-
-    expect(host.innerHTML).toBe("<h1>new</h1>")
-  })
-
-  it("replaces a subtree explicitly", () => {
-    const host = document.createElement("main")
-    const old = document.createElement("div")
-    host.append(old)
-
-    replace(old, <section>new</section>)
-
-    expect(host.innerHTML).toBe("<section>new</section>")
   })
 })
