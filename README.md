@@ -2,7 +2,7 @@
 
 Tiny TSX runtime for building **real DOM nodes**.
 
-UIBuilder is deliberately not a framework. There is no virtual DOM, reconciliation, reactive state, hooks, component lifecycle, scheduler, or hidden renderer. TSX is just pleasant syntax for creating DOM.
+UIBuilder is deliberately not a framework. There is no virtual DOM, reconciliation, reactive state, hooks, component lifecycle, scheduler, renderer, or DOM mounting API. TSX is just pleasant syntax for creating DOM.
 
 ```tsx
 const view = (
@@ -17,7 +17,7 @@ document.body.append(view)
 
 ## Philosophy
 
-The browser already has a UI tree: the DOM.
+The browser already has a UI tree and APIs for inserting, replacing and removing it: the DOM.
 
 UIBuilder keeps the original project's useful idea and removes the historical machinery around it:
 
@@ -27,7 +27,7 @@ UIBuilder keeps the original project's useful idea and removes the historical ma
 - Events use DOM-native names such as `onclick` and `oninput`.
 - DOM properties are assigned directly when possible.
 - `data-*`, `aria-*`, SVG, fragments, arrays and callback refs work naturally.
-- Redraw boundaries stay explicit. Replace a whole screen or one subtree when your application decides to.
+- DOM insertion and redraws use native APIs such as `append`, `replaceChildren` and `replaceWith`.
 
 ## Install
 
@@ -122,30 +122,33 @@ let input: HTMLInputElement
 const view = <input ref={element => { input = element }} />
 ```
 
-## Explicit redraws
+## Updating the DOM
 
-UIBuilder does not decide when or how your application redraws.
+UIBuilder stops after creating DOM nodes. Use the platform directly.
 
-For a screen-sized redraw:
-
-```tsx
-import { mount } from "@jdlanglois/uibuilder"
-
-mount(document.querySelector("#app")!, <Companies />)
-```
-
-For a surgical redraw:
+Replace a screen:
 
 ```tsx
-import { replace } from "@jdlanglois/uibuilder"
+const app = document.querySelector("#app")!
 
-replace(
-  document.querySelector("#company-list")!,
-  <CompanyList companies={companies} />
-)
+app.replaceChildren(<Companies />)
 ```
 
-These are thin wrappers over native DOM replacement.
+Replace one subtree:
+
+```tsx
+document
+  .querySelector("#company-list")!
+  .replaceWith(<CompanyList companies={companies} />)
+```
+
+Append something:
+
+```tsx
+document.body.append(<Toast message="Saved" />)
+```
+
+No UIBuilder abstraction is needed for operations the DOM already expresses clearly.
 
 ## Safety
 
@@ -171,11 +174,9 @@ jsxs
 Fragment
 append
 toNode
-mount
-replace
 ```
 
-Most applications should only need TSX plus `mount` or `replace`.
+Most applications should only use TSX. The runtime exports exist primarily to support the JSX transform and composition.
 
 ## Development
 
