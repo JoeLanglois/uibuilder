@@ -30,9 +30,20 @@ type HtmlElements = {
   [K in keyof HTMLElementTagNameMap]: DOMProps<HTMLElementTagNameMap[K]>
 }
 
+type SVGProps<T extends SVGElement> =
+  EventProps<T> &
+  DataProps &
+  AriaProps & {
+    [attribute: string]: unknown
+    class?: string
+    style?: string | Partial<CSSStyleDeclaration>
+    ref?: (element: T) => void
+    children?: Child
+  }
+
 type SvgElements = {
   [K in Exclude<keyof SVGElementTagNameMap, keyof HTMLElementTagNameMap>]:
-    DOMProps<SVGElementTagNameMap[K]>
+    SVGProps<SVGElementTagNameMap[K]>
 }
 
 type CustomElements = {
